@@ -8,8 +8,5 @@
   "main": "./mod.js",
   "module": "./mod.js",
   "types": "./mod.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:lichrot/signals.git"
-  }
+  "repository": "git+ssh://git@github.com/lichrot/signals.git"
 }
