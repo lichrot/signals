@@ -1,0 +1,11 @@
+{
+  "name": "@apophatique/signals",
+  "description": "A lightweight implementation of signals with explicit subscription.",
+  "version": "1.1.0",
+  "license": "gpl-3.0",
+  "author": "Jørgen Tau",
+  "type": "module",
+  "main": "./mod.js",
+  "module": "./mod.js",
+  "types": "./mod.d.ts"
+}
