@@ -7,5 +7,9 @@
   "type": "module",
   "main": "./mod.js",
   "module": "./mod.js",
-  "types": "./mod.d.ts"
+  "types": "./mod.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:lichrot/signals.git"
+  }
 }
