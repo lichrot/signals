@@ -59,5 +59,10 @@ export type ComparisonFn<TValue = any> = (lhv: TValue, rhv: TValue) => boolean;
 /** Unique identifier for effects. */
 export type EffectToken = symbol;
 
-/** Unique identifier for FinalizationRegistry registrations. */
+/**
+ * Unique identifier for FinalizationRegistry registrations.
+ *
+ * NOTE: Firefox can't use non-registered symbols as tokens yet:
+ * [compatibility table](https://caniuse.com/mdn-javascript_builtins_finalizationregistry_symbol_as_target)
+ */
 export type RegToken = Record<string, unknown>;
