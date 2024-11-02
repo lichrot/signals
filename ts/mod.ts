@@ -1,8 +1,8 @@
-import { clearEffect, createEffect } from "./src/createEffect.js";
-import { createSignal } from "./src/createSignal.js";
-import { Effect } from "./src/Effect.js";
-import { Primary } from "./src/Primary.js";
-import { Comp } from "./src/Comp.js";
+import { clearEffect, createEffect } from "./src/createEffect.ts";
+import { createSignal } from "./src/createSignal.ts";
+import { Effect } from "./src/Effect.ts";
+import { Primary } from "./src/Primary.ts";
+import { Comp } from "./src/Comp.ts";
 import type {
   ComparisonFn,
   Compute,
@@ -10,7 +10,7 @@ import type {
   EffectToken,
   SchedulerFn,
   Signal,
-} from "./src/types.d.ts";
+} from "./src/types.ts";
 
 export {
   clearEffect,

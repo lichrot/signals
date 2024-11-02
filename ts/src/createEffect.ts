@@ -1,12 +1,8 @@
-// Deno doesn't play nice with @import yet :'(
-// /** @import { EffectFn, EffectToken, SchedulerFn } from "./types.d.ts" */
-/** @typedef {import("./types.d.ts").EffectFn}    EffectFn    */
-/** @typedef {import("./types.d.ts").EffectToken} EffectToken */
-/** @typedef {import("./types.d.ts").SchedulerFn} SchedulerFn */
-import { Effect } from "./Effect.js";
+import { Effect } from "./Effect.ts";
+import type { EffectFn, EffectToken, SchedulerFn } from "./types.ts";
 
-/** All currently registered effects. @type {Record<EffectToken, Effect>} */
-const CUR_EFFECTS = {};
+/** All currently registered effects. */
+const CUR_EFFECTS: Map<EffectToken, Effect> = new Map();
 
 /**
  * Creates an effect that reexecutes each time it's subscriptions mutate.
@@ -35,10 +31,10 @@ const CUR_EFFECTS = {};
  *
  * stopEffect(effectToken);
  * ```
- * @overload
- * @arg {EffectFn} effectFn
- * @returns {EffectToken}
+ * @param effectFn A function that is used to subscribe to other signals and execute side effects
+ * @returns A unique identifier for this effect
  */
+export function createEffect(effectFn: EffectFn): EffectToken;
 /**
  * Creates an effect that reexecutes each time it's subscriptions mutate.
  *
@@ -69,33 +65,43 @@ const CUR_EFFECTS = {};
  *
  * stopEffect(effectToken);
  * ```
- * @overload
- * @arg {EffectFn} effectFn
- * @arg {SchedulerFn} [schedulerFnCustom]
- * @returns {EffectToken}
+ * @param effectFn A function that is used to subscribe to other signals and execute side effects
+ * @param schedulerFnCustom A function that will be used to schedule effects
+ * @returns A unique identifier for this effect
  */
+export function createEffect(
+  effectFn: EffectFn,
+  schedulerFnCustom?: SchedulerFn,
+): EffectToken;
 /**
- * @arg {EffectFn} effectFn
- * @arg {SchedulerFn} [schedulerFnCustom]
- * @returns {EffectToken}
+ * Creates an effect that reexecutes each time it's subscriptions mutate.
+ * @param effectFn A function that is used to subscribe to other signals and execute side effects
+ * @param schedulerFnCustom A function that will be used to schedule effects
+ * @returns A unique identifier for this effect
  */
-export function createEffect(effectFn, schedulerFnCustom) {
+export function createEffect(
+  effectFn: EffectFn,
+  schedulerFnCustom?: SchedulerFn,
+): EffectToken {
   const effectToken = Symbol();
-  CUR_EFFECTS[effectToken] = new Effect(effectFn, schedulerFnCustom);
+  CUR_EFFECTS.set(effectToken, new Effect(effectFn, schedulerFnCustom));
   return effectToken;
 }
 
 /**
  * Unregesters given effect, halting it and allowing it to be GC'ed.
- * @arg {EffectToken} effectToken
- * @returns {void}
+ * @param effectToken A unique identifier for the effect
  */
-export function clearEffect(effectToken) {
+export function clearEffect(effectToken: EffectToken): void {
+  const effect = CUR_EFFECTS.get(effectToken);
+  if (!effect) return;
+
   // Prevents scheduled callbacks from running
-  CUR_EFFECTS[effectToken].isStopped = true;
+  effect.isStopped = true;
   // Prevents callbacks from being scheduled
-  CUR_EFFECTS[effectToken].isScheduled = true;
-  // By deleting the effect we cut off
+  effect.isScheduled = true;
+
+  // By removing the effect from the map we cut off
   // the only strong reference to the effect and allow it to be GC'ed
-  delete CUR_EFFECTS[effectToken];
+  CUR_EFFECTS.delete(effectToken);
 }

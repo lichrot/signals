@@ -1,10 +1,6 @@
-// Deno doesn't play nice with @import yet :'(
-// /** @import { ComparisonFn, Compute, Signal } from "./types.d.ts" */
-/** @template [TValue=any]  @typedef {import("./types.d.ts").ComparisonFn<TValue>}  ComparisonFn  */
-/** @template TValue        @typedef {import("./types.d.ts").Compute<TValue>}       Compute       */
-/** @template [TValue=any]  @typedef {import("./types.d.ts").Signal<TValue>}        Signal        */
-import { Comp } from "./Comp.js";
-import { Primary } from "./Primary.js";
+import { Comp } from "./Comp.ts";
+import { Primary } from "./Primary.ts";
+import type { ComparisonFn, Compute, Signal } from "./types.ts";
 
 /**
  * Creates a subscriber signal that recomputes each time it's subscriptions have mutated. Recomputions are lazy (on demand).
@@ -25,11 +21,10 @@ import { Primary } from "./Primary.js";
  *
  * console.log(sumSig.get()); // prints "70"
  * ```
- * @template TValue
- * @overload
- * @arg {Compute<TValue>} compute
- * @returns {Comp<TValue>}
+ * @param compute A function that is used to subscribe to other signals and derive its value
+ * @returns A subscriber signal that recomputes each time it's subscriptions have mutated
  */
+export function createSignal<TValue>(compute: Compute<TValue>): Comp<TValue>;
 /**
  * Creates a primary signal that notifies it's subscribers about it's mutations.
  *
@@ -49,11 +44,10 @@ import { Primary } from "./Primary.js";
  *
  * console.log(sumSig.get()); // prints "70"
  * ```
- * @template TValue
- * @overload
- * @arg {TValue} value
- * @returns {Primary<TValue>}
+ * @param value Initial value to set this signal to
+ * @returns A primary signal that notifies it's subscribers about it's mutations
  */
+export function createSignal<TValue>(value: TValue): Primary<TValue>;
 /**
  * Creates a primary signal that notifies it's subscribers about it's mutations.
  *
@@ -76,26 +70,27 @@ import { Primary } from "./Primary.js";
  *
  * console.log(sumSig.get()); // prints "70"
  * ```
- * @template TValue
- * @overload
- * @arg {TValue} value
- * @arg {ComparisonFn<TValue>} [customComparisonFn]
- * @returns {Primary<TValue>}
+ * @param value Initial value to set this signal to
+ * @param customComparisonFn Custom comparison function that will be used by this signal
+ * @returns A primary signal that notifies it's subscribers about it's mutations
  */
+export function createSignal<TValue>(
+  value: TValue,
+  customComparisonFn?: ComparisonFn<TValue>,
+): Primary<TValue>;
 /**
- * @template TValue
- * @arg {Compute<TValue> | TValue} computeOrValue
- * @arg {ComparisonFn<TValue>} [customComparisonFn]
- * @returns {Signal<TValue>}
+ * Creates a primary or computed signal based on the value passed.
+ * @param computeOrValue A computation function or initial value
+ * @param customComparisonFn Custom comparison function that will be used by this signal
+ * @returns A primary or computed signal
  */
-export function createSignal(computeOrValue, customComparisonFn) {
+export function createSignal<TValue>(
+  computeOrValue: Compute<TValue> | TValue,
+  customComparisonFn?: ComparisonFn<TValue>,
+): Signal<TValue> {
   if (typeof computeOrValue === "function") {
-    return new Comp(/** @type {Compute<TValue>} */ (computeOrValue));
+    return new Comp(computeOrValue as Compute<TValue>);
   }
 
-  // type checking spazzes out here for some reason
-  return /** @type {any} */ (new Primary(
-    /** @type {any} */ (computeOrValue),
-    /** @type {any} */ (customComparisonFn),
-  ));
+  return new Primary(computeOrValue, customComparisonFn);
 }

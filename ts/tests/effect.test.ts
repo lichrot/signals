@@ -1,7 +1,7 @@
 import { assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async";
 
-import { clearEffect, createEffect, createSignal } from "../mod.js";
+import { clearEffect, createEffect, createSignal } from "../mod.ts";
 import { gc } from "./gc.ts";
 
 Deno.test("Effects", async ({ step }) => {

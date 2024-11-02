@@ -1,7 +1,7 @@
 import { assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async";
 
-import { createSignal } from "../mod.js";
+import { createSignal } from "../mod.ts";
 import { gc } from "./gc.ts";
 
 Deno.test("Subscriber signals", async ({ step }) => {
