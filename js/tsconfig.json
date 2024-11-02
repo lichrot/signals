@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "esnext",
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": ["ESNext", "dom", "dom.iterable", "dom.asynciterable"],
     "declaration": true,
     "emitDeclarationOnly": true,
     "allowImportingTsExtensions": true

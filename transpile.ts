@@ -27,9 +27,9 @@ const copyJsFilePaths = copyFilenames.map((filename) =>
 const [js, dts, rootMeta, jsrMeta, npmMeta, ...copyRootFiles] = await Promise
   .all([
     bundle(tsFilePath).then(({ code }) => code),
-    generateDtsBundle([{ filePath: tsFilePath }], {
+    generateDtsBundle([{ filePath: tsFilePath, output: { noBanner: true } }], {
       preferredConfigPath: tsConfigPath,
-    }).join("").replace(/^[/\w\s-.]+(?=declare)/g, ""),
+    }).join(""),
     Deno.readTextFile(rootMetaFilePath).then(JSON.parse),
     Deno.readTextFile(jsrMetaFilePath).then(JSON.parse),
     Deno.readTextFile(npmMetaFilePath).then(JSON.parse),
