@@ -41,7 +41,7 @@ export class IterableWeakSet<TValue extends WeakKey = WeakKey> {
   add(value: TValue): this {
     if (this.has(value)) return this;
 
-    const token = Symbol();
+    const token = {};
     const ref = new WeakRef(value);
 
     this.tokens.set(ref, token);

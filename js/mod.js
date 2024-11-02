@@ -109,7 +109,7 @@ class IterableWeakSet {
   }
   add(value) {
     if (this.has(value)) return this;
-    const token = Symbol();
+    const token = {};
     const ref = new WeakRef(value);
     this.tokens.set(ref, token);
     this.refs.set(value, ref);

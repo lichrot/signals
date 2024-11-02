@@ -60,4 +60,4 @@ export type ComparisonFn<TValue = any> = (lhv: TValue, rhv: TValue) => boolean;
 export type EffectToken = symbol;
 
 /** Unique identifier for FinalizationRegistry registrations. */
-export type RegToken = symbol;
+export type RegToken = Record<string, unknown>;
