@@ -2,7 +2,7 @@ import { assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async";
 
 import { clearEffect, createEffect, createSignal } from "../mod.ts";
-import { gc } from "./gc.ts";
+import { gc, getSetSize } from "./utils.ts";
 
 Deno.test("Effects", async ({ step }) => {
   const A_VALUE = 10;
@@ -13,18 +13,18 @@ Deno.test("Effects", async ({ step }) => {
     const bSig = createSignal(B_VALUE);
 
     let sum = 0;
-    createEffect((get) => {
-      sum = get(aSig) + get(bSig);
+    createEffect((track) => {
+      sum = track(aSig) + track(bSig);
     });
 
-    assertEquals(aSig.subs.size, 0);
-    assertEquals(bSig.subs.size, 0);
+    assertEquals(getSetSize(aSig.comps), 0);
+    assertEquals(getSetSize(bSig.comps), 0);
     assertEquals(sum, 0);
 
     await delay(0);
 
-    assertEquals(aSig.subs.size, 1);
-    assertEquals(bSig.subs.size, 1);
+    assertEquals(getSetSize(aSig.comps), 1);
+    assertEquals(getSetSize(bSig.comps), 1);
     assertEquals(sum, A_VALUE + B_VALUE);
   });
 
@@ -37,12 +37,14 @@ Deno.test("Effects", async ({ step }) => {
   await step("work with setTimeout scheduling", async () => {
     const aSig = createSignal(A_VALUE);
     const bSig = createSignal(B_VALUE);
-    const sumSig = createSignal((get) => get(aSig) + get(bSig));
+    const sumSig = createSignal((track) => track(aSig) + track(bSig));
 
     let result = "";
-    createEffect((get) => {
-      result = getSumMessage(...get.all([aSig, bSig, sumSig]));
-    }, setTimeout.bind(globalThis));
+    createEffect((track) => {
+      result = getSumMessage(
+        ...[aSig, bSig, sumSig].map(track) as [number, number, number],
+      );
+    });
 
     assertEquals(result, "");
 
@@ -67,11 +69,11 @@ Deno.test("Effects", async ({ step }) => {
 
     let compCount = 0;
     let result = 0;
-    createEffect((get) => {
+    createEffect((track) => {
       compCount += 1;
 
       for (const numSig of numSigs) {
-        result += get(numSig);
+        result += track(numSig);
       }
     });
 
@@ -106,10 +108,8 @@ Deno.test("Effects", async ({ step }) => {
   await step("work with async values and effect functions", async () => {
     const aAsyncSig = createSignal(Promise.resolve(A_VALUE));
     const bAsyncSig = createSignal(Promise.resolve(B_VALUE));
-    const sumAsyncSig = createSignal(async (get) => {
-      const [a, b] = await Promise.all(
-        get.all([aAsyncSig, bAsyncSig]),
-      );
+    const sumAsyncSig = createSignal(async (track) => {
+      const [a, b] = await Promise.all([aAsyncSig, bAsyncSig].map(track));
 
       await delay(DELAY);
 
@@ -118,14 +118,14 @@ Deno.test("Effects", async ({ step }) => {
 
     let result = "";
     createEffect(
-      async (get) => {
+      async (track) => {
         const args = await Promise.all(
-          get.all([aAsyncSig, bAsyncSig, sumAsyncSig]),
+          [aAsyncSig, bAsyncSig, sumAsyncSig].map(track),
         );
 
         await delay(DELAY);
 
-        result = getSumMessage(...args);
+        result = getSumMessage(...args as [number, number, number]);
       },
     );
 
@@ -148,17 +148,17 @@ Deno.test("Effects", async ({ step }) => {
     const primSig = createSignal(A_VALUE);
 
     let result = 0;
-    const token = createEffect((get) => {
-      result = get(primSig) ** 2;
+    const token = createEffect((track) => {
+      result = track(primSig) ** 2;
     });
 
     await delay(0);
     assertEquals(result, A_VALUE ** 2);
-    assertEquals(primSig.subs.size, 1);
+    assertEquals(getSetSize(primSig.comps), 1);
 
     clearEffect(token);
     await delay(DELAY);
     gc();
-    assertEquals(primSig.subs.size, 0);
+    assertEquals(getSetSize(primSig.comps), 0);
   });
 });

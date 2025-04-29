@@ -1,6 +1,6 @@
 import { Comp } from "./Comp.ts";
 import { Primary } from "./Primary.ts";
-import type { ComparisonFn, Compute, Signal } from "./types.ts";
+import type { Compute, Signal } from "./types.ts";
 
 /**
  * Creates a subscriber signal that recomputes each time it's subscriptions have mutated. Recomputions are lazy (on demand).
@@ -12,7 +12,7 @@ import type { ComparisonFn, Compute, Signal } from "./types.ts";
  * ```ts
  * const aSig = createSignal(10);
  * const bSig = createSignal(20);
- * const sumSig = createSignal((get) => get(aSig) + get(bSig));
+ * const sumSig = createSignal((track) => track(aSig) + track(bSig));
  *
  * console.log(sumSig.get()); // prints "30"
  *
@@ -24,7 +24,7 @@ import type { ComparisonFn, Compute, Signal } from "./types.ts";
  * @param compute A function that is used to subscribe to other signals and derive its value
  * @returns A subscriber signal that recomputes each time it's subscriptions have mutated
  */
-export function createSignal<TValue>(compute: Compute<TValue>): Comp<TValue>;
+export function createSignal<T>(compute: Compute<T>): Comp<T>;
 /**
  * Creates a primary signal that notifies it's subscribers about it's mutations.
  *
@@ -35,7 +35,7 @@ export function createSignal<TValue>(compute: Compute<TValue>): Comp<TValue>;
  * ```ts
  * const aSig = createSignal(10);
  * const bSig = createSignal(20);
- * const sumSig = createSignal((get) => get(aSig) + get(bSig));
+ * const sumSig = createSignal((track) => track(aSig) + track(bSig));
  *
  * console.log(sumSig.get()); // prints "30"
  *
@@ -47,50 +47,14 @@ export function createSignal<TValue>(compute: Compute<TValue>): Comp<TValue>;
  * @param value Initial value to set this signal to
  * @returns A primary signal that notifies it's subscribers about it's mutations
  */
-export function createSignal<TValue>(value: TValue): Primary<TValue>;
-/**
- * Creates a primary signal that notifies it's subscribers about it's mutations.
- *
- * Although mutations are synchronous, subscriber signals recompute lazily (on demand),
- * and effects are scheduled to execute with [queueMicrotask](https://developer.mozilla.org/en-US/docs/Web/API/Window/queueMicrotask) by default.
- *
- * Individual primary signals can be set to use custom comparison function.
- * If custom comparison function is passed, then it will always be used instead of the default one.
- *
- * @example Create a computed signal
- * ```ts
- * const aSig = createSignal(10);
- * const bSig = createSignal(20);
- * const sumSig = createSignal((get) => get(aSig) + get(bSig));
- *
- * console.log(sumSig.get()); // prints "30"
- *
- * aSig.set(30);
- * bSig.set(40);
- *
- * console.log(sumSig.get()); // prints "70"
- * ```
- * @param value Initial value to set this signal to
- * @param customComparisonFn Custom comparison function that will be used by this signal
- * @returns A primary signal that notifies it's subscribers about it's mutations
- */
-export function createSignal<TValue>(
-  value: TValue,
-  customComparisonFn?: ComparisonFn<TValue>,
-): Primary<TValue>;
+export function createSignal<T>(value: T): Primary<T>;
 /**
  * Creates a primary or computed signal based on the value passed.
  * @param computeOrValue A computation function or initial value
- * @param customComparisonFn Custom comparison function that will be used by this signal
  * @returns A primary or computed signal
  */
-export function createSignal<TValue>(
-  computeOrValue: Compute<TValue> | TValue,
-  customComparisonFn?: ComparisonFn<TValue>,
-): Signal<TValue> {
-  if (typeof computeOrValue === "function") {
-    return new Comp(computeOrValue as Compute<TValue>);
-  }
-
-  return new Primary(computeOrValue, customComparisonFn);
+export function createSignal<T>(computeOrValue: Compute<T> | T): Signal<T> {
+  return typeof computeOrValue === "function"
+    ? new Comp(computeOrValue as Compute<T>)
+    : new Primary(computeOrValue as T);
 }

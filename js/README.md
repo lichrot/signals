@@ -1,12 +1,30 @@
 # [@apophatique/signals] Yet another signal lib
 
-[![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://opensource.org/license/gpl-3-0)
+[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://opensource.org/license/apache-2-0)
 [![JSR Version](https://jsr.io/badges/@apophatique/signals)](https://jsr.io/@apophatique/signals)
 [![NPM Version](https://img.shields.io/npm/v/@apophatique/signals)](https://www.npmjs.com/package/@apophatique/signals)
 
 No promos here, just my implementation of signals.
 
-## Installation
+## [💀] Example
+
+```ts
+import { createEffect, createSignal } from "@apophatique/signals";
+
+const aSig = createSignal(10);
+const bSig = createSignal(20);
+const sumSig = createSignal((track) => track(aSig) + track(bSig));
+
+const token = createEffect((track) => {
+  console.log(`${track(aSig)} + ${track(bSig)} = ${track(sumSig)}`);
+});
+
+// ... after effect is no longer needed
+
+clearEffect(token);
+```
+
+## [💾] Installation
 
 Choose your fighter:
 
@@ -17,7 +35,7 @@ pnpm  install @apophatique/signals
 deno  install jsr:@apophatique/signals
 ```
 
-## Tasks
+## [🖥️] Tasks
 
 ```sh
 # Run tests
@@ -39,5 +57,5 @@ deno task publish
 ## [📝] License
 
 This work is licensed under
-[GPLv3](https://www.gnu.org/licenses/gpl-3.0-standalone.html) (see
+[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) (see
 [NOTICE](/NOTICE)).

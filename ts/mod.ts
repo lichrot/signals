@@ -1,28 +1,17 @@
 import { clearEffect, createEffect } from "./src/createEffect.ts";
 import { createSignal } from "./src/createSignal.ts";
-import { Effect } from "./src/Effect.ts";
-import { Primary } from "./src/Primary.ts";
-import { Comp } from "./src/Comp.ts";
-import type {
-  ComparisonFn,
-  Compute,
-  EffectFn,
-  EffectToken,
-  SchedulerFn,
-  Signal,
-} from "./src/types.ts";
+import type { Effect } from "./src/Effect.ts";
+import type { Primary } from "./src/Primary.ts";
+import type { Comp } from "./src/Comp.ts";
+import type { Compute, Signal } from "./src/types.ts";
 
 export {
   clearEffect,
-  Comp,
-  type ComparisonFn,
+  type Comp,
   type Compute,
   createEffect,
   createSignal,
-  Effect,
-  type EffectFn,
-  type EffectToken,
-  Primary,
-  type SchedulerFn,
+  type Effect,
+  type Primary,
   type Signal,
 };

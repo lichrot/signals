@@ -1,47 +1,26 @@
-import type { RegToken } from "./types.ts";
+import type { Token } from "./types.ts";
 
 /** An iterable version of WeakSet. */
-export class IterableWeakSet<TValue extends WeakKey = WeakKey> {
+export class IterableWeakSet<T extends WeakKey = WeakKey> {
   /** A map of all weak refs and their registration tokens. */
-  private readonly tokens: Map<WeakRef<TValue>, RegToken> = new Map();
+  private readonly tokens: Map<WeakRef<T>, Token> = new Map();
   /** A map where value is used as a weak key to it's own weak ref: After value is GC'ed, map get's cleared automagically. */
-  private readonly refs: WeakMap<TValue, WeakRef<TValue>> = new WeakMap();
+  private readonly refs: WeakMap<T, WeakRef<T>> = new WeakMap();
   /** Token map has to be cleaned manually in order to not leak empty weak refs and tokens. */
-  private readonly registry: FinalizationRegistry<WeakRef<TValue>> =
+  private readonly registry: FinalizationRegistry<WeakRef<T>> =
     new FinalizationRegistry(this.tokens.delete.bind(this.tokens)); // same as `((ref) => this.tokens.delete(ref))`
-  /** It's weak set iterating time. */
-  readonly [Symbol.toStringTag]: string = "IterableWeakSet";
-
-  /**
-   * Creates an iterable version of WeakSet.
-   * @param iterable Iterable to construct this IterableWeakSet from
-   */
-  constructor(iterable?: readonly TValue[] | Iterable<TValue> | null) {
-    if (!iterable) return;
-
-    for (const value of iterable) {
-      this.add(value);
-    }
-  }
-
-  /**
-   * Checks whether an element with the specified value exists in the IterableWeakSet or not.
-   * @param value
-   * @returns A boolean indicating whether an element with the specified value exists in the IterableWeakSet or not
-   */
-  has(value: TValue): boolean {
-    return this.refs.has(value);
-  }
 
   /**
    * Appends a new element with a specified value to the end of the IterableWeakSet.
    * @param value A value to add
    * @returns The original IterableWeakSet
    */
-  add(value: TValue): this {
-    if (this.has(value)) return this;
+  add(value: T): this {
+    if (this.refs.has(value)) {
+      return this;
+    }
 
-    const token = {};
+    const token: Token = {};
     const ref = new WeakRef(value);
 
     this.tokens.set(ref, token);
@@ -55,7 +34,7 @@ export class IterableWeakSet<TValue extends WeakKey = WeakKey> {
    * Returns IterableIterator that produces currently existing elements
    * @returns IterableIterator that produces currently existing elements
    */
-  *[Symbol.iterator](): IterableIterator<TValue> {
+  *[Symbol.iterator](): IterableIterator<T> {
     for (const [ref, token] of this.tokens) {
       const value = ref.deref();
 
@@ -71,19 +50,43 @@ export class IterableWeakSet<TValue extends WeakKey = WeakKey> {
     }
   }
 
-  /**
-   * Returns the number of (unique) elements in IterableWeakSet.
-   * @returns The number of (unique) elements in IterableWeakSet
-   */
-  get size(): number {
-    // We can't rely on token map for size since it can contain empty weak refs,
-    // so we iterate over the entire map and skip GC'ed entries: see [Symbol.iterator] method above
-    let size = 0;
-    for (const _ of this) size += 1;
-    return size;
-  }
-
   /* Full implementation of other common Set methods that's not needed right now */
+
+  /** It's weak set iterating time. */
+  // readonly [Symbol.toStringTag]: string = "IterableWeakSet";
+
+  // /**
+  //  * Creates an iterable version of WeakSet.
+  //  * @param iterable Iterable to construct this IterableWeakSet from
+  //  */
+  // constructor(iterable?: readonly T[] | Iterable<T> | null) {
+  //   if (!iterable) return;
+
+  //   for (const value of iterable) {
+  //     this.add(value);
+  //   }
+  // }
+
+  // /**
+  //  * Returns the number of (unique) elements in IterableWeakSet.
+  //  * @returns The number of (unique) elements in IterableWeakSet
+  //  */
+  // get size(): number {
+  //   // We can't rely on token map for size since it can contain empty weak refs,
+  //   // so we iterate over the entire map and skip GC'ed entries: see [Symbol.iterator] method above
+  //   let size = 0;
+  //   for (const _ of this) size += 1;
+  //   return size;
+  // }
+
+  // /**
+  //  * Checks whether an element with the specified value exists in the IterableWeakSet or not.
+  //  * @param value
+  //  * @returns A boolean indicating whether an element with the specified value exists in the IterableWeakSet or not
+  //  */
+  // has(value: T): boolean {
+  //   return this.refs.has(value);
+  // }
 
   // /**
   //  * Removes a specified value from the IterableWeakSet.

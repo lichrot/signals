@@ -1,72 +1,14 @@
-const decorateGetterFn = (getterFn) => {
-  getterFn.all = (signals) => signals.map(getterFn);
-  return getterFn;
-};
-const defaultGetterFn = decorateGetterFn((signal) => signal.get());
-const subscribe = (sub, signal) => {
-  const primaries = signal.isPrimary
-    ? [
-      signal,
-    ]
-    : signal.primaries;
+const subscribe = (comp, signal) => {
+  const primaries = signal.primaries ? signal.primaries : [
+    signal,
+  ];
   for (const primary of primaries) {
-    primary.subs.add(sub);
-    sub.primaries.add(primary);
+    comp.primaries.add(primary);
+    primary.comps.add(comp);
   }
 };
-const createSubGetterFn = (sub) =>
-  decorateGetterFn((signal) => {
-    const value = signal.get();
-    subscribe(sub, signal);
-    return value;
-  });
-class Effect {
-  static schedulerFnDefault = queueMicrotask.bind(globalThis);
-  isPrimary = false;
-  isEffect = true;
-  primaries = new Set();
-  isScheduled = true;
-  isStopped = false;
-  schedulerFn;
-  effectFn;
-  constructor(effectFn, schedulerFnCustom) {
-    this.effectFn = effectFn;
-    this.schedulerFn = schedulerFnCustom ?? Effect.schedulerFnDefault;
-    this.execute = this.execute.bind(this);
-    this.schedulerFn(() => {
-      if (this.isStopped) return;
-      const subGetterFn = createSubGetterFn(this);
-      this.effectFn(subGetterFn);
-      this.isScheduled = false;
-    });
-  }
-  notify() {
-    if (this.isScheduled) return;
-    this.schedulerFn(this.execute);
-    this.isScheduled = true;
-  }
-  execute() {
-    if (this.isStopped) return;
-    this.effectFn(defaultGetterFn);
-    this.isScheduled = false;
-  }
-}
-const CUR_EFFECTS = new Map();
-function createEffect(effectFn, schedulerFnCustom) {
-  const effectToken = Symbol();
-  CUR_EFFECTS.set(effectToken, new Effect(effectFn, schedulerFnCustom));
-  return effectToken;
-}
-function clearEffect(effectToken) {
-  const effect = CUR_EFFECTS.get(effectToken);
-  if (!effect) return;
-  effect.isStopped = true;
-  effect.isScheduled = true;
-  CUR_EFFECTS.delete(effectToken);
-}
+const track = (signal) => signal.get();
 class Comp {
-  isPrimary = false;
-  isEffect = false;
   primaries = new Set();
   value = null;
   isDirty = true;
@@ -78,37 +20,57 @@ class Comp {
     this.isDirty = true;
   }
   get() {
-    const subGetterFn = createSubGetterFn(this);
-    this.value = this.compute(subGetterFn);
+    this.value = this.compute((signal) => {
+      const value = signal.get();
+      subscribe(this, signal);
+      return value;
+    });
     this.isDirty = false;
-    this.get = this.getWithoutSubscription;
+    this.get = this.noSubGet;
     return this.value;
   }
-  getWithoutSubscription() {
-    if (!this.isDirty) return this.value;
-    this.value = this.compute(defaultGetterFn);
+  noSubGet() {
+    if (!this.isDirty) {
+      return this.value;
+    }
+    this.value = this.compute(track);
     this.isDirty = false;
     return this.value;
   }
 }
-var _computedKey, _computedKey1;
-_computedKey = Symbol.toStringTag, _computedKey1 = Symbol.iterator;
+class Effect extends Comp {
+  constructor(compute) {
+    super(compute);
+    this.get = this.get.bind(this);
+    this.noSubGet = this.noSubGet.bind(this);
+    queueMicrotask(this.get);
+  }
+  notify() {
+    super.notify();
+    queueMicrotask(this.get);
+  }
+}
+const EFFECT_MAP = new Map();
+function createEffect(compute) {
+  const token = {};
+  EFFECT_MAP.set(token, new Effect(compute));
+  return token;
+}
+function clearEffect(token) {
+  const effect = EFFECT_MAP.get(token);
+  if (!effect) return;
+  EFFECT_MAP.delete(token);
+}
+var _computedKey;
+_computedKey = Symbol.iterator;
 class IterableWeakSet {
   tokens = new Map();
   refs = new WeakMap();
   registry = new FinalizationRegistry(this.tokens.delete.bind(this.tokens));
-  [_computedKey] = "IterableWeakSet";
-  constructor(iterable) {
-    if (!iterable) return;
-    for (const value of iterable) {
-      this.add(value);
-    }
-  }
-  has(value) {
-    return this.refs.has(value);
-  }
   add(value) {
-    if (this.has(value)) return this;
+    if (this.refs.has(value)) {
+      return this;
+    }
     const token = {};
     const ref = new WeakRef(value);
     this.tokens.set(ref, token);
@@ -116,7 +78,7 @@ class IterableWeakSet {
     this.registry.register(value, ref, token);
     return this;
   }
-  *[_computedKey1]() {
+  *[_computedKey]() {
     for (const [ref, token] of this.tokens) {
       const value = ref.deref();
       if (value) {
@@ -127,44 +89,30 @@ class IterableWeakSet {
       }
     }
   }
-  get size() {
-    let size = 0;
-    for (const _ of this) size += 1;
-    return size;
-  }
 }
 class Primary {
-  static comparisonFnDefault = Object.is;
-  isPrimary = true;
-  subs = new IterableWeakSet();
-  comparisonFn;
+  comps = new IterableWeakSet();
   value;
-  constructor(value, comparisonFnCustom) {
+  constructor(value) {
     this.value = value;
-    this.comparisonFn = comparisonFnCustom ?? Primary.comparisonFnDefault;
   }
   get() {
     return this.value;
   }
   set(value) {
-    if (this.comparisonFn(this.value, value)) return;
     this.value = value;
-    for (const sub of this.subs) {
-      sub.notify();
+    for (const comp of this.comps) {
+      comp.notify();
     }
   }
 }
-function createSignal(computeOrValue, customComparisonFn) {
-  if (typeof computeOrValue === "function") {
-    return new Comp(computeOrValue);
-  }
-  return new Primary(computeOrValue, customComparisonFn);
+function createSignal(computeOrValue) {
+  return typeof computeOrValue === "function"
+    ? new Comp(computeOrValue)
+    : new Primary(computeOrValue);
 }
 export {
   clearEffect as clearEffect,
-  Comp as Comp,
   createEffect as createEffect,
   createSignal as createSignal,
-  Effect as Effect,
-  Primary as Primary,
 };

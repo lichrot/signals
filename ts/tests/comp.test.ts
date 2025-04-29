@@ -2,7 +2,7 @@ import { assertEquals } from "jsr:@std/assert";
 import { delay } from "jsr:@std/async";
 
 import { createSignal } from "../mod.ts";
-import { gc } from "./gc.ts";
+import { gc, getSetSize } from "./utils.ts";
 
 Deno.test("Subscriber signals", async ({ step }) => {
   const A_VALUE = 10;
@@ -11,7 +11,7 @@ Deno.test("Subscriber signals", async ({ step }) => {
   await step("subscribe", () => {
     const aSig = createSignal(A_VALUE);
     const bSig = createSignal(B_VALUE);
-    const sumSig = createSignal((get) => get(aSig) + get(bSig));
+    const sumSig = createSignal((track) => track(aSig) + track(bSig));
 
     sumSig.get(); // init
     assertEquals(sumSig.primaries.size, 2);
@@ -28,9 +28,11 @@ Deno.test("Subscriber signals", async ({ step }) => {
     () => {
       const aSig = createSignal(A_VALUE);
       const bSig = createSignal(B_VALUE);
-      const sumSig = createSignal((get) => get(aSig) + get(bSig));
-      const deepSumSig = createSignal((get) =>
-        getSumMessage(...get.all([aSig, bSig, sumSig]))
+      const sumSig = createSignal((track) => track(aSig) + track(bSig));
+      const deepSumSig = createSignal((track) =>
+        getSumMessage(
+          ...[aSig, bSig, sumSig].map(track) as [number, number, number],
+        )
       );
 
       deepSumSig.get();
@@ -44,9 +46,11 @@ Deno.test("Subscriber signals", async ({ step }) => {
   await step("(re)compute on demand", () => {
     const aSig = createSignal(A_VALUE);
     const bSig = createSignal(B_VALUE);
-    const sumSig = createSignal((get) => get(aSig) + get(bSig));
-    const deepSumSig = createSignal((get) =>
-      getSumMessage(...get.all([aSig, bSig, sumSig]))
+    const sumSig = createSignal((track) => track(aSig) + track(bSig));
+    const deepSumSig = createSignal((track) =>
+      getSumMessage(
+        ...[aSig, bSig, sumSig].map(track) as [number, number, number],
+      )
     );
 
     // init
@@ -77,12 +81,12 @@ Deno.test("Subscriber signals", async ({ step }) => {
     );
 
     let compCount = 0;
-    const sumSig = createSignal((get) => {
+    const sumSig = createSignal((track) => {
       compCount += 1;
 
       let result = 0;
       for (const numSig of numSigs) {
-        result += get(numSig);
+        result += track(numSig);
       }
 
       return result;
@@ -110,10 +114,8 @@ Deno.test("Subscriber signals", async ({ step }) => {
   await step("work with async values and computations", async () => {
     const aAsyncSig = createSignal(Promise.resolve(A_VALUE));
     const bAsyncSig = createSignal(Promise.resolve(B_VALUE));
-    const sumAsyncSig = createSignal(async (get) => {
-      const [a, b] = await Promise.all(
-        get.all([aAsyncSig, bAsyncSig]),
-      );
+    const sumAsyncSig = createSignal(async (track) => {
+      const [a, b] = await Promise.all([aAsyncSig, bAsyncSig].map(track));
 
       await delay(DELAY);
 
@@ -121,14 +123,14 @@ Deno.test("Subscriber signals", async ({ step }) => {
     });
 
     const deepSumAsyncSig = createSignal(
-      async (get) => {
+      async (track) => {
         const args = await Promise.all(
-          get.all([aAsyncSig, bAsyncSig, sumAsyncSig]),
+          [aAsyncSig, bAsyncSig, sumAsyncSig].map(track),
         );
 
         await delay(DELAY);
 
-        return getSumMessage(...args);
+        return getSumMessage(...args as [number, number, number]);
       },
     );
 
@@ -155,15 +157,15 @@ Deno.test("Subscriber signals", async ({ step }) => {
 
     (() => {
       for (let idx = 0; idx < 10000; idx++) {
-        const compSig = createSignal((get) => get(primSig) ** 2);
+        const compSig = createSignal((track) => track(primSig) ** 2);
 
         assertEquals(compSig.get(), A_VALUE ** 2);
-        assertEquals(primSig.subs.size, idx + 1);
+        assertEquals(getSetSize(primSig.comps), idx + 1);
       }
     })();
 
     await delay(DELAY);
     gc();
-    assertEquals(primSig.subs.size, 0);
+    assertEquals(getSetSize(primSig.comps), 0);
   });
 });
