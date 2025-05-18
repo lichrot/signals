@@ -1,6 +1,5 @@
-import { assertEquals } from "jsr:@std/assert";
-import { delay } from "jsr:@std/async";
-
+import { assertEquals } from "jsr:@std/assert/equals";
+import { delay } from "jsr:@std/async/delay";
 import { createSignal } from "../mod.ts";
 import { gc, getSetSize } from "./utils.ts";
 

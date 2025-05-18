@@ -17,8 +17,9 @@
     "publish": "deno task publish:jsr && deno task publish:npm"
   },
   "imports": {
-    "@deno/emit": "jsr:@deno/emit@^0.46.0",
-    "@std/assert": "jsr:@std/assert@^1.0.13",
-    "@std/async": "jsr:@std/async@^1.0.12"
+    "@deno/emit": "jsr:@deno/emit",
+    "@std/assert/equals": "jsr:@std/assert/equals",
+    "@std/async/delay": "jsr:@std/async/delay",
+    "dts-bundle-generator": "npm:dts-bundle-generator"
   }
 }
