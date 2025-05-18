@@ -1,15 +1,15 @@
-# [@apophatique/signals] Yet another signal lib
+# [@qnd/signals] Yet another signal lib
 
 [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://opensource.org/license/apache-2-0)
-[![JSR Version](https://jsr.io/badges/@apophatique/signals)](https://jsr.io/@apophatique/signals)
-[![NPM Version](https://img.shields.io/npm/v/@apophatique/signals)](https://www.npmjs.com/package/@apophatique/signals)
+[![JSR Version](https://jsr.io/badges/@qnd/signals)](https://jsr.io/@qnd/signals)
+[![NPM Version](https://img.shields.io/npm/v/@qnd/signals)](https://www.npmjs.com/package/@qnd/signals)
 
 No promos here, just my implementation of signals.
 
 ## [💀] Example
 
 ```ts
-import { createEffect, createSignal } from "@apophatique/signals";
+import { createEffect, createSignal } from "@qnd/signals";
 
 const aSig = createSignal(10);
 const bSig = createSignal(20);
@@ -29,10 +29,10 @@ clearEffect(token);
 Choose your fighter:
 
 ```sh
-npm   install @apophatique/signals
-yarn  add     @apophatique/signals
-pnpm  install @apophatique/signals
-deno  install jsr:@apophatique/signals
+npm   install @qnd/signals
+yarn  add     @qnd/signals
+pnpm  install @qnd/signals
+deno  install jsr:@qnd/signals
 ```
 
 ## [🖥️] Tasks
