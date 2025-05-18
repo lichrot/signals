@@ -13,7 +13,7 @@
     "dry-run": "deno task dry-run:jsr && deno task dry-run:npm",
     "prepare": "deno task test && deno task transpile && deno fmt && deno task dry-run",
     "publish:jsr": "cd ./ts && deno publish",
-    "publish:npm": "cd ./js && npm publish",
+    "publish:npm": "cd ./js && npm publish --access=public",
     "publish": "deno task publish:jsr && deno task publish:npm"
   },
   "imports": {
