@@ -1,6 +1,7 @@
 import { assertEquals } from "jsr:@std/assert/equals";
 import { delay } from "jsr:@std/async/delay";
-import { clearEffect, createEffect, createSignal } from "../mod.ts";
+
+import { createEffect, createSignal } from "../mod.ts";
 import { gc, getSetSize } from "./utils.ts";
 
 Deno.test("Effects", async ({ step }) => {
@@ -147,7 +148,7 @@ Deno.test("Effects", async ({ step }) => {
     const primSig = createSignal(A_VALUE);
 
     let result = 0;
-    const token = createEffect((track) => {
+    const clearEffect = createEffect((track) => {
       result = track(primSig) ** 2;
     });
 
@@ -155,7 +156,7 @@ Deno.test("Effects", async ({ step }) => {
     assertEquals(result, A_VALUE ** 2);
     assertEquals(getSetSize(primSig.comps), 1);
 
-    clearEffect(token);
+    clearEffect();
     await delay(DELAY);
     gc();
     assertEquals(getSetSize(primSig.comps), 0);

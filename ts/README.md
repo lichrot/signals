@@ -15,13 +15,13 @@ const aSig = createSignal(10);
 const bSig = createSignal(20);
 const sumSig = createSignal((track) => track(aSig) + track(bSig));
 
-const token = createEffect((track) => {
+const clearEffect = createEffect((track) => {
   console.log(`${track(aSig)} + ${track(bSig)} = ${track(sumSig)}`);
 });
 
 // ... after effect is no longer needed
 
-clearEffect(token);
+clearEffect();
 ```
 
 ## [💾] Installation

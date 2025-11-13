@@ -6,7 +6,11 @@ import type { Compute, Signal, Track } from "./types.ts";
  * @param comp A subscriber to subscribe
  * @param signal A signal to subscribe subscriber to
  */
-const subscribe = (comp: Comp, signal: Signal) => {
+// deno-lint-ignore no-explicit-any
+const subscribe = <T = any>(comp: Comp, signal: Signal<T>): T => {
+  // Initialize lazy signals in order to get the subscriptions
+  const value = signal.get();
+
   // deno-lint-ignore no-explicit-any
   const primaries = (signal as any).primaries
     ? (signal as Comp).primaries
@@ -16,6 +20,8 @@ const subscribe = (comp: Comp, signal: Signal) => {
     comp.primaries.add(primary);
     primary.comps.add(comp);
   }
+
+  return value;
 };
 
 /** Just gets signal's value */
@@ -29,7 +35,7 @@ export class Comp<T = any> {
   /** The last computation result. */
   private value: T = null!;
   /** Whether this signal needs to be recomputed. */
-  isDirty: boolean = true;
+  dirty: boolean = true;
   /** A function that is used to subscribe to other signals and derive its value. */
   private compute: Compute<T>;
 
@@ -43,7 +49,7 @@ export class Comp<T = any> {
 
   /** Notify this subscriber that its subscription mutated. */
   notify(): void {
-    this.isDirty = true;
+    this.dirty = true;
   }
 
   /**
@@ -51,15 +57,9 @@ export class Comp<T = any> {
    * @returns The latest (re)computed value
    */
   get(): T {
-    this.value = this.compute((signal) => {
-      const value = signal.get();
-      subscribe(this, signal);
-      return value;
-    });
-
-    this.isDirty = false;
+    this.value = this.compute((signal) => subscribe(this, signal));
+    this.dirty = false;
     this.get = this.noSubGet;
-
     return this.value;
   }
 
@@ -67,14 +67,9 @@ export class Comp<T = any> {
    * After intialization, only checks if dirty.
    * @returns The latest (re)computed value
    */
-  noSubGet(): T {
-    if (!this.isDirty) {
-      return this.value;
-    }
-
-    this.value = this.compute(track);
-    this.isDirty = false;
-
-    return this.value;
+  protected noSubGet(): T {
+    if (!this.dirty) return this.value;
+    this.dirty = false;
+    return this.value = this.compute(track);
   }
 }

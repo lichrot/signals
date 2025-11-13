@@ -1,6 +1,6 @@
 // deno-lint-ignore no-explicit-any
 if (!(globalThis as any)?.gc) {
-  throw new Error("No gc function");
+  throw new Error("No GC function");
 }
 
 /** Forces V8 garbage collection pass */

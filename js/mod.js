@@ -1,4 +1,5 @@
 const subscribe = (comp, signal) => {
+  const value = signal.get();
   const primaries = signal.primaries ? signal.primaries : [
     signal,
   ];
@@ -6,36 +7,30 @@ const subscribe = (comp, signal) => {
     comp.primaries.add(primary);
     primary.comps.add(comp);
   }
+  return value;
 };
 const track = (signal) => signal.get();
 class Comp {
   primaries = new Set();
   value = null;
-  isDirty = true;
+  dirty = true;
   compute;
   constructor(compute) {
     this.compute = compute;
   }
   notify() {
-    this.isDirty = true;
+    this.dirty = true;
   }
   get() {
-    this.value = this.compute((signal) => {
-      const value = signal.get();
-      subscribe(this, signal);
-      return value;
-    });
-    this.isDirty = false;
+    this.value = this.compute((signal) => subscribe(this, signal));
+    this.dirty = false;
     this.get = this.noSubGet;
     return this.value;
   }
   noSubGet() {
-    if (!this.isDirty) {
-      return this.value;
-    }
-    this.value = this.compute(track);
-    this.isDirty = false;
-    return this.value;
+    if (!this.dirty) return this.value;
+    this.dirty = false;
+    return this.value = this.compute(track);
   }
 }
 class Effect extends Comp {
@@ -54,12 +49,7 @@ const EFFECT_MAP = new Map();
 function createEffect(compute) {
   const token = {};
   EFFECT_MAP.set(token, new Effect(compute));
-  return token;
-}
-function clearEffect(token) {
-  const effect = EFFECT_MAP.get(token);
-  if (!effect) return;
-  EFFECT_MAP.delete(token);
+  return () => EFFECT_MAP.delete(token);
 }
 var _computedKey;
 _computedKey = Symbol.iterator;
@@ -90,6 +80,7 @@ class IterableWeakSet {
     }
   }
 }
+const is = Object.is;
 class Primary {
   comps = new IterableWeakSet();
   value;
@@ -100,6 +91,7 @@ class Primary {
     return this.value;
   }
   set(value) {
+    if (is(this.value, value)) return;
     this.value = value;
     for (const comp of this.comps) {
       comp.notify();
@@ -111,8 +103,4 @@ function createSignal(computeOrValue) {
     ? new Comp(computeOrValue)
     : new Primary(computeOrValue);
 }
-export {
-  clearEffect as clearEffect,
-  createEffect as createEffect,
-  createSignal as createSignal,
-};
+export { createEffect as createEffect, createSignal as createSignal };

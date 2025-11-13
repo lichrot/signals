@@ -1,6 +1,6 @@
 import type { Token } from "./types.ts";
 
-/** An iterable version of WeakSet. */
+/** An iterable version of {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet | WeakSet}. */
 export class IterableWeakSet<T extends WeakKey = WeakKey> {
   /** A map of all weak refs and their registration tokens. */
   private readonly tokens: Map<WeakRef<T>, Token> = new Map();

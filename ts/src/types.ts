@@ -13,6 +13,9 @@ export type Track = <T = any>(signal: Signal<T>) => T;
 // deno-lint-ignore no-explicit-any
 export type Compute<T = any> = (track: Track) => T;
 
+/** Unregesters given effect, halting it and allowing it to be GC'ed. */
+export type ClearEffect = () => void;
+
 /**
  * Unique identifier.
  *

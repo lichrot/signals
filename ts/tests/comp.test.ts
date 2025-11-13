@@ -1,5 +1,6 @@
 import { assertEquals } from "jsr:@std/assert/equals";
 import { delay } from "jsr:@std/async/delay";
+
 import { createSignal } from "../mod.ts";
 import { gc, getSetSize } from "./utils.ts";
 
@@ -57,7 +58,7 @@ Deno.test("Subscriber signals", async ({ step }) => {
 
     aSig.set(NEW_A_VALUE);
     assertEquals(sumSig.get(), NEW_A_VALUE + B_VALUE);
-    assertEquals(deepSumSig.isDirty, true);
+    assertEquals(deepSumSig.dirty, true);
 
     bSig.set(NEW_B_VALUE);
     assertEquals(
@@ -68,8 +69,8 @@ Deno.test("Subscriber signals", async ({ step }) => {
         NEW_A_VALUE + NEW_B_VALUE,
       ),
     );
-    assertEquals(sumSig.isDirty, false);
-    assertEquals(deepSumSig.isDirty, false);
+    assertEquals(sumSig.dirty, false);
+    assertEquals(deepSumSig.dirty, false);
   });
 
   const PRIMARY_COUNT = 100;

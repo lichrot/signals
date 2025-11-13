@@ -1,6 +1,8 @@
 import type { Comp } from "./Comp.ts";
 import { IterableWeakSet } from "./IterableWeakSet.ts";
 
+const is: typeof Object["is"] = Object.is;
+
 /** A primary signal that notifies it's subscribers about it's mutations. */
 // deno-lint-ignore no-explicit-any
 export class Primary<T = any> {
@@ -32,6 +34,8 @@ export class Primary<T = any> {
    * @param value A new value to set this signal to
    */
   set(value: T) {
+    if (is(this.value, value)) return;
+
     this.value = value;
 
     for (const comp of this.comps) {

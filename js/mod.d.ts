@@ -48,7 +48,7 @@ export declare class Comp<T = any> {
   /** The last computation result. */
   private value;
   /** Whether this signal needs to be recomputed. */
-  isDirty: boolean;
+  dirty: boolean;
   /** A function that is used to subscribe to other signals and derive its value. */
   private compute;
   /**
@@ -67,7 +67,7 @@ export declare class Comp<T = any> {
    * After intialization, only checks if dirty.
    * @returns The latest (re)computed value
    */
-  noSubGet(): T;
+  protected noSubGet(): T;
 }
 /** Any signal entity that can be subscribed to. */
 export type Signal<T = any> = Primary<T> | Comp<T>;
@@ -75,13 +75,8 @@ export type Signal<T = any> = Primary<T> | Comp<T>;
 export type Track = <T = any>(signal: Signal<T>) => T;
 /** Function that is used to subscribe to other signals and derive a value. */
 export type Compute<T = any> = (track: Track) => T;
-/**
- * Unique identifier.
- *
- * NOTE: Firefox can't use non-registered symbols as FinalizationRegistry registration tokens yet:
- * [compatibility table](https://caniuse.com/?search=mdn-javascript_builtins_finalizationregistry_register_symbol_as_target)
- */
-export type Token = Record<string, unknown>;
+/** Unregesters given effect, halting it and allowing it to be GC'ed. */
+export type ClearEffect = () => void;
 /**
  * Creates an effect that reexecutes each time it's subscriptions mutate.
  *
@@ -95,25 +90,20 @@ export type Token = Record<string, unknown>;
  * const bSig = createSignal(20);
  * const sumSig = createSignal((track) => track(aSig) + track(bSig));
  *
- * const token = createEffect(
+ * const clearEffect = createEffect(
  *   (track) => console.log(`${track(aSig)} + ${track(bSig)} = ${track(sumSig)}`),
  * );
  *
  * // ... after effect is no longer needed
  *
- * clearEffect(token);
+ * clearEffect();
  * ```
  * @param compute A function that is used to subscribe to other signals and execute side effects
- * @returns A unique identifier for this effect
+ * @returns A function that clears the registered effect
  */
 export declare function createEffect(
   compute: Compute<void | PromiseLike<void>>,
-): Token;
-/**
- * Unregesters given effect, halting it and allowing it to be GC'ed.
- * @param token A unique identifier for the effect
- */
-export declare function clearEffect(token: Token): void;
+): ClearEffect;
 /**
  * Creates a subscriber signal that recomputes each time it's subscriptions have mutated. Recomputions are lazy (on demand).
  *

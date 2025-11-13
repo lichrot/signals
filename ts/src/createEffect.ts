@@ -1,7 +1,12 @@
 import { Effect } from "./Effect.ts";
-import type { Compute, Token } from "./types.ts";
+import type { ClearEffect, Compute, Token } from "./types.ts";
 
-/** All currently registered effects. */
+/**
+ * All currently registered effects.
+ *
+ * N.B. Plain Set cannot be used because cleanup function ({@link ClearEffect})
+ * will keep the reference to the effect alive, rendering it un'GC'able until the cleanup function itself get's GC'ed.
+ */
 const EFFECT_MAP: Map<Token, Effect> = new Map();
 
 /**
@@ -17,31 +22,21 @@ const EFFECT_MAP: Map<Token, Effect> = new Map();
  * const bSig = createSignal(20);
  * const sumSig = createSignal((track) => track(aSig) + track(bSig));
  *
- * const token = createEffect(
+ * const clearEffect = createEffect(
  *   (track) => console.log(`${track(aSig)} + ${track(bSig)} = ${track(sumSig)}`),
  * );
  *
  * // ... after effect is no longer needed
  *
- * clearEffect(token);
+ * clearEffect();
  * ```
  * @param compute A function that is used to subscribe to other signals and execute side effects
- * @returns A unique identifier for this effect
+ * @returns A function that clears the registered effect
  */
 export function createEffect(
   compute: Compute<void | PromiseLike<void>>,
-): Token {
+): ClearEffect {
   const token: Token = {};
   EFFECT_MAP.set(token, new Effect(compute));
-  return token;
-}
-
-/**
- * Unregesters given effect, halting it and allowing it to be GC'ed.
- * @param token A unique identifier for the effect
- */
-export function clearEffect(token: Token): void {
-  const effect = EFFECT_MAP.get(token);
-  if (!effect) return;
-  EFFECT_MAP.delete(token);
+  return () => EFFECT_MAP.delete(token);
 }
